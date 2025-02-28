@@ -13,7 +13,7 @@ path_pages = "./data/pages"
 records = pd.read_csv("./data/parsing_href.csv").to_dict(orient="records")
 dirs = os.listdir(path_pages)
 
-dirs = [(i.split("_")[0], i) for i in dirs]
+dirs = [(int(i.split("_")[0]), i) for i in dirs]
 dirs = sorted(dirs, key=lambda x: x[0])
 
 
@@ -39,9 +39,9 @@ result = []
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
-    for index, html_file in enumerate(tqdm(dirs)):
-        record = records[index]
-        with open(f"{path_pages}/{html_file[1][:60]}", "r", encoding="utf-8") as file:
+    for html_file in tqdm(dirs):
+        record = {}
+        with open(f"{path_pages}/{html_file[1]}", "r", encoding="utf-8") as file:
             html_content = file.read()
 
         page = browser.new_page()
@@ -53,6 +53,9 @@ with sync_playwright() as p:
             except Exception as e:
                 logger.info(f"Ошибка: {e}")
                 continue
+
+        title_block = page.query_selector_all("h1.post-hdr")
+        record["title"] = pars_block(title_block)
 
         short_block = page.query_selector_all("div.post-short-block")
         record["short"] = pars_block(short_block)

@@ -1,13 +1,10 @@
-import re
-
 import gradio as gr
 from loguru import logger
 from langchain import PromptTemplate
 
 from src.service.context_search import ContextSearch
+from src.models.model_api import use_min_max
 
-
-think_pattern = r"<think>(.*?)</think>"
 
 context_search = ContextSearch(collection_name="social", qdrant_url="localhost")
 
@@ -19,8 +16,7 @@ system_template = """
 
 **Задача**
 Твоя задача ответить на вопрос пользователя. Прежде чем давать ответ на
-вопрос пользователя изучи переданный тебе контекст. Контекст состоит из
-вопросов других граждан и ответов на них других граждан.
+вопрос пользователя изучи переданный тебе контекст.
 
 **Контекст**
 {context}
@@ -28,40 +24,43 @@ system_template = """
 
 
 def predict(message, history):
-    history = []
-    print("message", message)
-    print("history", history)
-    context = context_search.create_context(user_message=message)
-    #     system_prompt = (
-    #         PromptTemplate(
-    #             template=system_template,
-    #             partial_variables={"user_message": message, "context": context},
-    #         )
-    #         .format_prompt()
-    #         .text
-    #     )
+    logger.info(f"Вопрос пользователя: {message}")
+    context = context_search.create_context(user_message=message)[0]
+    system_prompt = (
+        PromptTemplate(
+            template=system_template,
+            partial_variables={"context": context},
+        )
+        .format_prompt()
+        .text
+    )
 
-    #     answer = llm.generate(
-    #         chat=[
-    #             {
-    #                 "role": "system",
-    #                 "content": system_prompt,
-    #             },
-    #             {"role": "user", "content": message},
-    #         ]
-    #     )
-    #     logger.info(f"Ответ модели: {answer}")
-    #     final_response = re.sub(think_pattern, "", answer, flags=re.DOTALL).strip()
-    #     final_response = f"""
-    # Контекст
-    # {context}
+    answer = use_min_max(system_prompt=system_prompt, message=message)
 
-    # Ответ модели
-    # {answer}
-    # """
-    return context[0]
+    logger.info(f"Ответ модели: {answer}")
+
+    final_response = f"""
+## Найденный обзор
+
+{context}
 
 
-demo = gr.ChatInterface(predict, type="messages")
+## Ответ модели
 
-demo.launch(share=False)
+{answer}
+    """
+    logger.info(f"Финальный ответ: {final_response}")
+    return final_response
+
+
+demo = gr.ChatInterface(
+    predict,
+    type="messages",
+    examples=[
+        "Что россияне думали полиции в 2024 году?",
+        "Материальный достаток россиян в 2024 году",
+    ],
+    title="Бот отвечает на основе данных ВЦИОМ (https://wciom.ru/analytical-reviews)"
+)
+
+demo.launch(share=True)

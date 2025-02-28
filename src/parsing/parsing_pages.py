@@ -1,3 +1,4 @@
+import os
 import time
 
 import pandas as pd
@@ -11,10 +12,15 @@ records = pd.read_csv("./data/parsing_href.csv").to_dict(orient="records")
 
 base_url = "https://wciom.ru"
 
+parsed_pages = os.listdir("data/pages/")
+parsed_pages = [int(i.split("_")[0]) for i in parsed_pages]
+
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
     for index, record in enumerate(tqdm(records)):
+        if index in parsed_pages:
+            continue
         url = f"{base_url}/{record["href"]}"
 
         page = browser.new_page()
@@ -33,7 +39,9 @@ with sync_playwright() as p:
         html_content = page.content()
 
         with open(
-            f'data/pages/{index}_{record["title"][:60]}.html', "w", encoding="utf-8"
+            f'data/pages/{index}_{record["title"][:60].replace("/", "_")}.html',
+            "w",
+            encoding="utf-8",
         ) as file:
             file.write(html_content)
 

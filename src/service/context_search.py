@@ -35,20 +35,31 @@ class ContextSearch:
         info = []
         for point in points:
             text = ""
-            text += point.payload["title"]
-            text += "\n\n"
-            text += point.payload["post"]
-            text += "\n\n"
-            text += point.payload["short"]
-            text += "\n\n"
-            text += point.payload["review"]
-            text += "\n\n"
-            text += point.payload["tables"]
-            text += "\n\n"
-            text += point.payload["comment"]
-            text += "\n\n"
-            text += point.payload["method"]
-            text += "\n\n"
+            text += f"## {point.payload['title']}"
+            if point.payload['post']:
+                text += "\n\n"
+                text += f"Краткое описание: {point.payload['post']}"
+            if point.payload["short"]:
+                text += "\n\n"
+                text += point.payload["short"]
+            if point.payload['review']:
+                text += "\n\n"
+                text += f"Обзор: {point.payload['review']}"
+            if point.payload["tables"]:
+                text += "\n\n"
+                text += "## Таблицы"
+                text += "\n"
+                text += point.payload["tables"]
+            if point.payload["comment"]:
+                text += "\n\n"
+                text += "## Комментарий"
+                text += "\n"
+                text += point.payload["comment"]
+            if point.payload["method"]:
+                text += "\n\n"
+                text += "## Методология"
+                text += "\n"
+                text += point.payload["method"]
             info.append(text)
         return info
 
