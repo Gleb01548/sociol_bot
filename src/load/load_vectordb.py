@@ -1,19 +1,19 @@
-import pandas as pd
-
 from tqdm import tqdm
 from loguru import logger
+from datasets import load_dataset
 from qdrant_client import QdrantClient, models
-
 
 from src.models.init_xinference import init_xinference
 from src.models.embedding_api import get_embeddings
 
-COLLECTION_NAME = "social"
+COLLECTION_NAME = "social1"
 
 init_xinference()
 
 
-records = pd.read_csv("./data/parsed_data.csv").fillna("").to_dict(orient="records")
+dataset = load_dataset("Gleb01548/analytical_reports_vciom")
+records = dataset["train"].to_pandas().fillna("").to_dict(orient="records")
+
 
 client = QdrantClient(url="localhost")
 logger.info(f"Создание коллекции с именем {COLLECTION_NAME}")

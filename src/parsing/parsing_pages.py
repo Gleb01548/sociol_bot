@@ -39,7 +39,7 @@ with sync_playwright() as p:
         html_content = page.content()
 
         with open(
-            f'data/pages/{index}_{record["title"][:60].replace("/", "_")}.html',
+            f'data/pages/{index}_{str(record["title"])[:60].replace("/", "_")}.html',
             "w",
             encoding="utf-8",
         ) as file:
